@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DatingApp.API.Data;
 using DatingApp.API.Dtos;
 using DatingApp.API.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -15,7 +16,7 @@ namespace DatingApp.API.Controllers
     // [ApiController] consente di evitare di mettere l'attributo [FromBody], inoltre esegue la validazione in automatico 
     // del modelState e ritorna un badrequest con gli errori del modelState in automatico
     [Route("api/[controller]")]
-    [ApiController] 
+    [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly IAuthRepository _repo;
@@ -40,7 +41,7 @@ namespace DatingApp.API.Controllers
             if (await _repo.UserExists(userForRegisterDto.Username))
                 return BadRequest("Username already exists");
 
-            var userToCreate = new User 
+            var userToCreate = new User
             {
                 Username = userForRegisterDto.Username
             };
@@ -54,8 +55,11 @@ namespace DatingApp.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
         {
+
+            //throw new Exception("Il server dice no!");
+
             var userFromRepo = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
-            
+
             if (userFromRepo == null)
                 return Unauthorized();
 
@@ -69,7 +73,8 @@ namespace DatingApp.API.Controllers
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
-            var tokenDescriptor = new SecurityTokenDescriptor {
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.Now.AddDays(1),
                 SigningCredentials = creds
@@ -79,10 +84,11 @@ namespace DatingApp.API.Controllers
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            return Ok(new {
-               token = tokenHandler.WriteToken(token) 
+            return Ok(new
+            {
+                token = tokenHandler.WriteToken(token)
             });
-            
+
         }
 
 
