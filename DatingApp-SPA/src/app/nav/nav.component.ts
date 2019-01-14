@@ -2,6 +2,7 @@ import { AlertifyService } from './../_services/alertify.service';
 import { AuthService } from './../_services/auth.service';
 import { Component, OnInit } from '@angular/core';
 import { modelGroupProvider } from '@angular/forms/src/directives/ng_model_group';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-nav',
@@ -11,7 +12,8 @@ import { modelGroupProvider } from '@angular/forms/src/directives/ng_model_group
 export class NavComponent implements OnInit {
   model: any = {};
 
-  constructor(private authervice: AuthService, private alertify: AlertifyService) { }
+  constructor(private authervice: AuthService, private alertify: AlertifyService,
+              private router: Router) { }
 
   ngOnInit() {
   }
@@ -23,6 +25,8 @@ export class NavComponent implements OnInit {
     }, error => {
       this.alertify.error(error);
       console.log(error);
+    }, () => {
+      this.router.navigate(['/members']);
     });
   }
 
@@ -33,6 +37,7 @@ export class NavComponent implements OnInit {
   logOut() {
     localStorage.removeItem('token');
     this.alertify.message('Logged out');
+    this.router.navigate(['/home']);
     console.log('Logged out');
     this.model.username = '';
     this.model.password = '';
