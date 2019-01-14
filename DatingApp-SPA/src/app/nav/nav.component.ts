@@ -1,3 +1,4 @@
+import { AlertifyService } from './../_services/alertify.service';
 import { AuthService } from './../_services/auth.service';
 import { Component, OnInit } from '@angular/core';
 import { modelGroupProvider } from '@angular/forms/src/directives/ng_model_group';
@@ -10,27 +11,29 @@ import { modelGroupProvider } from '@angular/forms/src/directives/ng_model_group
 export class NavComponent implements OnInit {
   model: any = {};
 
-  constructor(private authervice: AuthService) { }
+  constructor(private authervice: AuthService, private alertify: AlertifyService) { }
 
   ngOnInit() {
   }
 
   login() {
     this.authervice.login(this.model).subscribe(next => {
-      console.log(next);
+      this.alertify.success('Loged in successfully');
+      console.log('Loged in successfully');
     }, error => {
+      this.alertify.error(error);
       console.log(error);
     });
   }
 
   loggedIn() {
-    const token = localStorage.getItem('token');
-    return !!token;
+    return this.authervice.loggedIn();
   }
 
   logOut() {
     localStorage.removeItem('token');
-    console.log('logged out');
+    this.alertify.message('Logged out');
+    console.log('Logged out');
     this.model.username = '';
     this.model.password = '';
   }
