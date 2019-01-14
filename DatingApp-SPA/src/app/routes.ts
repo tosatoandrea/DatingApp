@@ -8,6 +8,10 @@ import { Routes } from '@angular/router';
 export const appRoutes: Routes = [
     { path: '',     component: HomeComponent },
     {
+        // dummy routes, in pratica viene composto il percorso es. http://localhost:4200/[pathvalue]/members
+        // dato che path vale '' il percorso generato è http://localhost:4200/members
+        // in questo modo vengono raggruppate le 3 routes sottostanti e messe sotto la routes guard [AuthGuard] che
+        // assicura che l'utente sia loggato
         path: '',
         runGuardsAndResolvers: 'always',
         canActivate: [AuthGuard],
