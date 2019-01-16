@@ -12,14 +12,14 @@ import { Router } from '@angular/router';
 export class NavComponent implements OnInit {
   model: any = {};
 
-  constructor(private authervice: AuthService, private alertify: AlertifyService,
+  constructor(public authService: AuthService, private alertify: AlertifyService,
               private router: Router) { }
 
   ngOnInit() {
   }
 
   login() {
-    this.authervice.login(this.model).subscribe(next => {
+    this.authService.login(this.model).subscribe(next => {
       this.alertify.success('Loged in successfully');
       console.log('Loged in successfully');
     }, error => {
@@ -31,7 +31,7 @@ export class NavComponent implements OnInit {
   }
 
   loggedIn() {
-    return this.authervice.loggedIn();
+    return this.authService.loggedIn();
   }
 
   logOut() {
