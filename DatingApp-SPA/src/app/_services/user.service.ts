@@ -9,7 +9,7 @@ import { User } from '../_models/user';
   providedIn: 'root'
 })
 export class UserService {
-  baseUrl = environment.apiUr;
+  baseUrl = environment.apiUrl;
 
   constructor(private httpClient: HttpClient) { }
 
@@ -24,4 +24,16 @@ export class UserService {
   updateUser(id: number, user: User) {
     return this.httpClient.put(this.baseUrl + 'users/' + id, user);
   }
+
+  setMainPhoto(userId: number, photoId: number) {
+    console.log(this.baseUrl + 'users/' + userId + '/photos/' + photoId + '/setmain');
+    return this.httpClient.post(this.baseUrl + 'users/' + userId + '/photos/' + photoId + '/setmain', {});
+  }
+
+  deletePhoto(userId: number, photoId: number) {
+    console.log(this.baseUrl + 'users/' + userId + '/photos/' + photoId);
+    return this.httpClient.delete(this.baseUrl + 'users/' + userId + '/photos/' + photoId);
+  }
+
+
 }

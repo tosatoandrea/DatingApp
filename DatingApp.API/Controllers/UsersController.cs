@@ -47,6 +47,9 @@ namespace DatingApp.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UserForUpdateDto userForUpdateDto)
         {
+            // l'id viene dal parametro nell'indizizzo
+            // in ogni caso, anche se venisse dal body occorre eseguire il seguente test che attesta
+            // che l'id utilizzato corrisponde a quello del token di autorizzazione perchè
             if (id != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
                 return Unauthorized();
 
@@ -59,6 +62,7 @@ namespace DatingApp.API.Controllers
 
             throw new Exception($"Updating user {id} failed on save");
         }
+
 
     }
 }

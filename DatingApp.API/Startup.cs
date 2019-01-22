@@ -41,6 +41,9 @@ namespace DatingApp.API
                             .AddJsonOptions(options => {
                                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;});
             services.AddCors();
+
+            // serve per mappare la sezione dei settings sulle proprietà della classe helper CloudinarySettings 
+            services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
             services.AddAutoMapper();
             services.AddTransient<Seed>();
             services.AddScoped<IAuthRepository, AuthRepository>();
