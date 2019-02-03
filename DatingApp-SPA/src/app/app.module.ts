@@ -1,3 +1,4 @@
+import { ListsResolver } from './_resolvers/list.resolver';
 import { AuthGuard } from './_guards/auth.guard';
 import { PreventUnsavedChanges } from './_guards/prevent-unsaved-changes.guard';
 import { BrowserModule } from '@angular/platform-browser';
@@ -86,6 +87,7 @@ export function tokenGetter() {
       MemberDetailResolver,
       MemberListResolver,
       MemberEditResolver,
+      ListsResolver,
       PreventUnsavedChanges
    ],
    bootstrap: [
