@@ -1,9 +1,10 @@
+import { Message } from './../_models/Message';
+import { PaginatedResult } from './../_models/pagination';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from './../../environments/environment';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { User } from '../_models/user';
-import { PaginatedResult } from '../_models/pagination';
 import { map } from 'rxjs/operators';
 
 
@@ -73,6 +74,45 @@ export class UserService {
 
   sendLike(userId: number, recipientId: number) {
     return this.http.post(this.baseUrl + 'users/' + userId + '/like/' + recipientId, {});
+  }
+
+  getMessages(userId: number, pageNumber?, itemsPerPage?, messageContainer?) {
+    const paginatedResult: PaginatedResult<Message[]> = new PaginatedResult<Message[]>();
+
+    let params = new HttpParams();
+
+    params = params.append('MessageContainer', messageContainer);
+
+    if (pageNumber != null && itemsPerPage != null) {
+      params = params.append('pageNumber', pageNumber);
+      params = params.append('pageSize', itemsPerPage);
+    }
+
+    return this.http.get<Message[]>(this.baseUrl + 'users/' + userId + '/messages', {observe: 'response', params})
+      .pipe(
+        map(response => {
+          paginatedResult.result = response.body;
+          if (response.headers.get('Pagination') != null) {
+            paginatedResult.pagination = JSON.parse(response.headers.get('Pagination'));
+          }
+          return paginatedResult;
+        }));
+  }
+
+  getMessageThread(userId: number, recipientId: number) {
+    return this.http.get<Message[]>(this.baseUrl + 'users/' + userId + '/messages/thread/' + recipientId);
+  }
+
+  sendMessage(userId: number, message: Message) {
+    return this.http.post(this.baseUrl + 'users/' + userId + '/messages', message);
+  }
+
+  deleteMessage(id: number, userId: number) {
+    return this.http.post(this.baseUrl + 'users/' + userId + '/messages/' + id, {});
+  }
+
+  markAsRead(userId: number, messageId: number) {
+    this.http.post(this.baseUrl + 'users/' + userId + '/messages/' + messageId + '/read', {});
   }
 
 }

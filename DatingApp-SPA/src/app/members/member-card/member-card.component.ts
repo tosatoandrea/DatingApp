@@ -4,7 +4,7 @@ import { AuthService } from './../../_services/auth.service';
 import { Component, OnInit, Input } from '@angular/core';
 import { User } from 'src/app/_models/user';
 
-import { userInfo } from 'os';
+// import { userInfo } from 'os';
 
 @Component({
   selector: 'app-member-card',
