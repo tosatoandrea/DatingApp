@@ -31,10 +31,12 @@ namespace DatingApp.API.Data
             return await _context.Photos.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<User> GetUser(int id)
+        public async Task<User> GetUser(int id, bool alsoAwaitingApprovalPhotos = false)
         {
-            var user = await _context.Users.Include(p => p.Photos).FirstOrDefaultAsync(x => x.Id == id);
-            return user;
+            if (alsoAwaitingApprovalPhotos)
+                return await _context.Users.Include(p => p.Photos).IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
+            else
+                return await _context.Users.Include(p => p.Photos).FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<PagedList<User>> GetUsers(UserParams userParams)

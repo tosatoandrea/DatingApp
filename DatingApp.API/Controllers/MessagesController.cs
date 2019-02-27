@@ -14,7 +14,7 @@ namespace DatingApp.API.Controllers
 {
     [ServiceFilter(typeof(LogUserActivity))] // ad ogni chiamata di una delle action del controller viene eseguita l'action filter LogUserActivity
     [Route("api/users/{userId}/[controller]")]
-    [Authorize]
+    // [Authorize] da configurazione in startup c'è la sezione che di default imposta Authorize su tutti i controllers
     [ApiController]
     public class MessagesController : ControllerBase
     {

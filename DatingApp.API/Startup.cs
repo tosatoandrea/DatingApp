@@ -7,13 +7,17 @@ using System.Threading.Tasks;
 using AutoMapper;
 using DatingApp.API.Data;
 using DatingApp.API.Helpers;
+using DatingApp.API.Model;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,17 +41,20 @@ namespace DatingApp.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("Default")));
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                            .AddJsonOptions(options => {
-                                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;});
-            services.AddCors();
 
-            // serve per mappare la sezione dei settings sulle proprietà della classe helper CloudinarySettings 
-            services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
-            services.AddAutoMapper();
-            services.AddTransient<Seed>();
-            services.AddScoped<IAuthRepository, AuthRepository>();
-            services.AddScoped<IDatingRepository, DatingRepository>();
+            // ================= configurazione asp net core identity =============================
+            IdentityBuilder builder = services.AddIdentityCore<User>(opt => {
+                opt.Password.RequireDigit = false;
+                opt.Password.RequiredLength = 4;
+                opt.Password.RequireNonAlphanumeric = false;
+                opt.Password.RequireUppercase = false;
+            });
+            builder = new IdentityBuilder(builder.UserType, typeof(Role), builder.Services);
+            builder.AddEntityFrameworkStores<DataContext>();
+            builder.AddRoleValidator<RoleValidator<Role>>();
+            builder.AddRoleManager<RoleManager<Role>>();
+            builder.AddSignInManager<SignInManager<User>>();
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(opt => {
                     opt.TokenValidationParameters = new TokenValidationParameters {
@@ -57,6 +64,35 @@ namespace DatingApp.API
                         ValidateAudience = false
                     };
                 });
+
+            services.AddAuthorization(opt => {
+                opt.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+                opt.AddPolicy("ModeratePthotoRole", policy => policy.RequireRole("Admin", "Moderator"));
+                opt.AddPolicy("VIPOnly", policy => policy.RequireRole("VIP"));
+            });
+            // ====================================================================================
+
+            services.AddMvc(opt => {
+                    // serve per fare in modo che ogni controller di default richieda l'autorizzazione
+                    // quindi non serve specificare l'attributo Authorize nei controller
+                    var policy = new AuthorizationPolicyBuilder()
+                        .RequireAuthenticatedUser()
+                        .Build();
+                    opt.Filters.Add(new AuthorizeFilter(policy));
+                })
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+                .AddJsonOptions(options => {
+                                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;});
+
+            services.AddCors();
+
+            // serve per mappare la sezione dei settings sulle proprietà della classe helper CloudinarySettings 
+            services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
+            Mapper.Reset();
+            services.AddAutoMapper();
+            services.AddTransient<Seed>();
+            services.AddScoped<IDatingRepository, DatingRepository>();
+            
             services.AddScoped<LogUserActivity>();
         }
 
@@ -88,12 +124,24 @@ namespace DatingApp.API
                 //app.UseHsts();
             }
 
-            //seeder.SeedUsers();
+            
+            seeder.SeedUsers();
 
             //app.UseHttpsRedirection();
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             app.UseAuthentication();
-            app.UseMvc();
+            app.UseDefaultFiles(); // indica di servire i file di defalt, es. index.html, default.aspx, default.html, ecc..
+            app.UseStaticFiles();
+
+            // il parametro routes serve per gestire correttamente le route dicendo a MVC di reindirizzare le route al 
+            // controller Fallback, action Index che a sua volta informa MCV di usare Index.html in wwwroot che è l'applicazione
+            // angular per la gestione delle routes
+            app.UseMvc(routes => {
+                routes.MapSpaFallbackRoute(
+                    name: "spa-fallback",
+                    defaults: new { controller = "Fallback", action = "Index"}
+                );
+            });
         }
     }
 }

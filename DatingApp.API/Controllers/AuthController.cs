@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -8,25 +9,31 @@ using DatingApp.API.Data;
 using DatingApp.API.Dtos;
 using DatingApp.API.Model;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace DatingApp.API.Controllers
 {
+    [AllowAnonymous]
     // [ApiController] consente di evitare di mettere l'attributo [FromBody], inoltre esegue la validazione in automatico 
     // del modelState e ritorna un badrequest con gli errori del modelState in automatico
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthRepository _repo;
         IConfiguration _config;
         private readonly IMapper _mapper;
-        public AuthController(IAuthRepository repo, IConfiguration config, IMapper mapper)
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager,
+            IConfiguration config, IMapper mapper)
         {
+            this._signInManager = signInManager;
+            this._userManager = userManager;
             this._mapper = mapper;
-            this._repo = repo;
             this._config = config;
         }
 
@@ -36,21 +43,20 @@ namespace DatingApp.API.Controllers
             // se non si utilizza l'attributo [ApiController] occorre verificare se il modelState è valido
             // e gestire la risposta nel caso non lo sia
             // usando invece l'attributo [ApiController] questo viene gestito in automatico da AspNet Core
-            // if (!ModelState.IsValid)
-            //     return BadRequest(ModelState);
-
-            // validate request
-            userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
-            if (await _repo.UserExists(userForRegisterDto.Username))
-                return BadRequest("Username already exists");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             var userToCreate = _mapper.Map<User>(userForRegisterDto);
 
-            var createdUser = await _repo.Register(userToCreate, userForRegisterDto.Password);
+            var result = await _userManager.CreateAsync(userToCreate, userForRegisterDto.Password);
 
-            var userToReturn = _mapper.Map<UserForDetailsDto>(createdUser);
-
-            return CreatedAtRoute("GetUser", new { Controller = "Users", id = createdUser.Id}, userToReturn);
+            if (result.Succeeded)
+            {
+                var userToReturn = _mapper.Map<UserForDetailsDto>(userToCreate);    
+                return CreatedAtRoute("GetUser", new { Controller = "Users", id = userToCreate.Id }, userToReturn);
+            }
+            
+            return BadRequest(result.Errors);
         }
 
 
@@ -58,19 +64,38 @@ namespace DatingApp.API.Controllers
         public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
         {
 
-            //throw new Exception("Il server dice no!");
+            var user = await _userManager.FindByNameAsync(userForLoginDto.Username);
+            var result = await _signInManager.CheckPasswordSignInAsync(user, userForLoginDto.Password, false);
 
-            var userFromRepo = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
-
-            if (userFromRepo == null)
-                return Unauthorized();
-
-            var claims = new[]
+            if (result.Succeeded)
             {
-                new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
-                new Claim(ClaimTypes.Name, userFromRepo.Username),
+                var appUser = await _userManager.Users.Include(u => u.Photos).FirstOrDefaultAsync(u => u.Id == user.Id);
+
+                var userToReturn = _mapper.Map<UserForListDto>(appUser);    
+
+                return Ok(new
+                {
+                    token = GenerateJwtToken(appUser).Result,
+                    user = userToReturn
+                });
+            }
+            return Unauthorized();
+        }
+
+        public async Task<string> GenerateJwtToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName)
             };
 
+            var roles = await _userManager.GetRolesAsync(user);
+            
+            foreach (var role in roles)
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            
+                
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetSection("AppSettings:Token").Value));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
@@ -86,17 +111,9 @@ namespace DatingApp.API.Controllers
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            var user = _mapper.Map<UserForListDto>(userFromRepo);
-
-            return Ok(new
-            {
-                token = tokenHandler.WriteToken(token),
-                user
-            });
-
+            return tokenHandler.WriteToken(token);
         }
 
-
-
     }
+
 }

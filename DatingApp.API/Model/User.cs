@@ -1,15 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
 
 namespace DatingApp.API.Model
 {
-    public class User
+    // usando IdentityUser<int> si dice a net core identity di usare un int come chiave primaria per l'untete invece che string come di default
+    
+    public class User : IdentityUser<int> 
     {
-        public int Id { get; set; }
-        public string Username { get; set; }
-        public byte[] PasswordHash { get; set; }
-        public byte[] PasswordSalt { get; set; }
+        // proprietà che esistono già nella classe base IdentityUser
+        //public int Id { get; set; }
+        //public byte[] PasswordHash { get; set; }
+        //public string Username { get; set; }
+        //public byte[] PasswordSalt { get; set; }
 
         public string Gender { get; set; }
 
@@ -29,5 +33,7 @@ namespace DatingApp.API.Model
 
         public ICollection<Message> MessagesSent { get; set; }
         public ICollection<Message> MessagesReceived { get; set; }
+
+        public ICollection<UserRole> UserRoles { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+import { AdminPanelComponent } from './admin/admin-panel/admin-panel.component';
 import { PreventUnsavedChanges } from './_guards/prevent-unsaved-changes.guard';
 import { MemberDetailResolver } from './_resolvers/member-detail.resolver';
 import { MemberDetailComponent } from './members/member-detail/member-detail.component';
@@ -29,7 +30,8 @@ export const appRoutes: Routes = [
             { path: 'member/edit',  component: MemberEditComponent, resolve: {user: MemberEditResolver},
                 canDeactivate: [PreventUnsavedChanges] },
             { path: 'messages', component: MessagesComponent, resolve: {messages: MessagesResolver} },
-            { path: 'lists',    component: ListsComponent, resolve: {users: ListsResolver} }
+            { path: 'lists',    component: ListsComponent, resolve: {users: ListsResolver} },
+            { path: 'admin',    component: AdminPanelComponent, data: {roles: ['Admin', 'Moderator']} }
         ]
     },
 

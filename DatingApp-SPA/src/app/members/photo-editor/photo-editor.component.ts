@@ -23,6 +23,13 @@ export class PhotoEditorComponent implements OnInit {
 
   ngOnInit() {
     this.initializeUploader();
+
+    // log
+    if (this.photos) {
+      this.photos.forEach(p => {
+        console.log('Photo ' + p.id + ' is approved: ' + p.isApproved);
+      });
+    }
   }
 
   fileOverBase(e: any): void {

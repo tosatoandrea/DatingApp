@@ -11,3 +11,20 @@ img.img-thumbnail {
 input[type=file] {
     color: transparent;
 }
+
+.not-approved {
+    opacity: 0.2;
+}
+
+/* .container {
+    position: relative;
+    text-align: center;  
+} */
+
+/* Centered text in image container */
+.centered-in-container {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%); 
+}

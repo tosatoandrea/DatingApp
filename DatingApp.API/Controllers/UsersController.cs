@@ -14,7 +14,7 @@ namespace DatingApp.API.Controllers
 {
     [ServiceFilter(typeof(LogUserActivity))] // ad ogni chiamata di una delle action del controller viene eseguita l'action filter LogUserActivity
     [Route("api/[controller]")]
-    [Authorize]
+    // [Authorize] da configurazione in startup c'è la sezione che di default imposta Authorize su tutti i controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
@@ -53,6 +53,16 @@ namespace DatingApp.API.Controllers
         public async Task<IActionResult> GetUser(int id)
         {
             var user = await _repo.GetUser(id);
+
+            var userToReturnDto = _mapper.Map<UserForDetailsDto>(user);
+
+            return Ok(userToReturnDto);
+        }
+
+        [HttpGet("{id}/alsoToApprovePhotos", Name = "GetUserAllPhotos")]
+        public async Task<IActionResult> GetUserAllPhotos(int id)
+        {
+            var user = await _repo.GetUser(id, true);
 
             var userToReturnDto = _mapper.Map<UserForDetailsDto>(user);
 

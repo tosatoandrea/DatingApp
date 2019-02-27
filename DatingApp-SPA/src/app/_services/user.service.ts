@@ -54,8 +54,8 @@ export class UserService {
       );
   }
 
-  getUser(id: string): Observable<User> {
-    return this.http.get<User>(this.baseUrl + 'users/' + id);
+  getUser(id: string, alsoAwaitingApproval: boolean = false): Observable<User> {
+    return this.http.get<User>(this.baseUrl + 'users/' + id + (alsoAwaitingApproval ? '/alsoToApprovePhotos' : ''));
   }
 
   updateUser(id: number, user: User) {
